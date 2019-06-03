@@ -9,7 +9,7 @@ void rootPage() {
 }
 void setup() {
   delay(1000);
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println();
   Server.on("/", rootPage);
   if (Portal.begin()) {
