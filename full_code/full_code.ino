@@ -1,4 +1,4 @@
-#define SEALEVELPRESSURE_HPA (1013.25)
+#include <EEPROM.h>
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
@@ -8,6 +8,9 @@
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BME680.h"
 #include <MAX44009.h>
+
+
+#define SEALEVELPRESSURE_HPA (1013.25)
 
 // for luxmeter sensor
 MAX44009 light;
@@ -45,12 +48,32 @@ void setup()
 {
   Serial.begin(9600);  // Init serial link for debugging
 
+  //  structura pentru salvarea tokenului in eprom
+  uint addr = 0;
+  struct {
+    uint val = 0;
+    char token[20] = "";
+  } data;
+
+  // pentru scrierea in EEPROM
+  EEPROM.begin(512);
+  EEPROM.get(addr, data);
+  Serial.println();
+  Serial.println("Old values are: " + String(data.token) + " & " + String(data.val));
+
+  //  aici vom adauga tokenul pe care trebuie sa il scriem in memorie
+  if (data.val != 1) {
+    Serial.println("modificam in memorie");
+    strncpy(data.token, "password", 20);
+    data.val = 1;
+    // replace values in byte-array cache with modified data
+    // no changes made to flash, all in local byte-array cache
+    EEPROM.put(addr, data);
+    EEPROM.commit();
+  }
+
   //  pinul pentru modul de access point
   pinMode(13, OUTPUT);
-
-  //  WiFiManager wifiManager;
-  //  wifiManager.startConfigPortal("ESP 8266");
-  //  Serial.println("connected...yeey :)");
 
   // WiFiManager
   // Local intialization. Once its business is done, there is no need to keep it around
@@ -60,8 +83,6 @@ void setup()
   //  wifiManager.resetSettings();
 
   // incearca sa se conecteze la retelele din memoria eprom si daca nu reuseste isi face access point
-  //  wifiManager.autoConnect("ESP8266 AP");
-
   if ( digitalRead(13) == HIGH)
   {
     wifiManager.startConfigPortal("ESP8266 AP");
@@ -130,11 +151,14 @@ void setup()
   Serial.print("Esp ip adresss: ");
   Serial.println(WiFi.localIP());
 
-  //sleep for 10 seconds
-  ESP.deepSleep(10000000, WAKE_RF_DEFAULT);
+  //  EEPROM ce avem in memorie
+  EEPROM.get(addr, data);
+  Serial.println("New values are: " + String(data.token) + " & " + String(data.val));
+
 }
 
 void loop()
 {
-
+  //sleep for 10 seconds
+  ESP.deepSleep(10000000, WAKE_RF_DEFAULT);
 }
