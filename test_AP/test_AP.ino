@@ -11,7 +11,7 @@ char sea_level_pressure[40];
 void setup()
 {
   Serial.begin(9600);  // Init serial link for debugging
-
+  Serial.println("starting test...");
 
   
   // WiFiManager

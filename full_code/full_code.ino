@@ -155,10 +155,11 @@ void setup()
   EEPROM.get(addr, data);
   Serial.println("New values are: " + String(data.token) + " & " + String(data.val));
 
+
 }
 
 void loop()
 {
   //sleep for 10 seconds
-  ESP.deepSleep(10000000, WAKE_RF_DEFAULT);
+  //  ESP.deepSleep(10000000, WAKE_RF_DEFAULT);
 }
