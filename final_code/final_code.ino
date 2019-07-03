@@ -39,13 +39,10 @@ const char* password = "bumbumsacalaca";
 ESP8266WebServer server(80); //Server on port 80
 
 
-// scanare de dispozitive si trimitere catre client
 void handleRoot() {
   //pregatim datele de trimis
   StaticJsonBuffer<300> JSONbuffer;
   JsonObject& JSONencoder = JSONbuffer.createObject();
-
-  //  JSONencoder["device"] = "IoTPub New Device";
 
   int n = WiFi.scanNetworks();
   Serial.println("scan done");
@@ -65,72 +62,98 @@ void handleRoot() {
       Serial.print(")");
       Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*");
       delay(10);
+      //      JSONencoder[String(i)] = String(WiFi.SSID(i) + " " + WiFi.RSSI(i));
       JSONencoder[WiFi.SSID(i)] = WiFi.RSSI(i);
     }
   }
 
-  //  trimiterea datelor buffer mareeeeee
-  char JSONmessageBuffer[500];
+  //  trimiterea datelor
+  char JSONmessageBuffer[400];
   JSONencoder.printTo(JSONmessageBuffer, sizeof(JSONmessageBuffer));
   Serial.println("Sending Wifi networks");
   Serial.println(JSONmessageBuffer);
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "text/plain", JSONmessageBuffer);
 }
 
 
-// primive SSID si parola pentru autentificare + JVT
 void authRoutine() {
+
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  //  server.sendHeader("Retry-After", "15");
+  //  server.sendHeader("Status", "469");
+  //  server.send(200, "text/plain", "trying conection...");
+
   String ssid_name;
   String psswd;
-  Serial.println("Cerere de auth");
 
+  Serial.println("Cerere de auth");
   Serial.print("Numarul de argumente este:");
   Serial.println(server.args());
 
   if (server.args() == 2 ) { // Arguments were received
-    Serial.println("SSID: " + server.arg(0));
-    Serial.println("PSSWD: " + server.arg(1));
-    ssid_name = server.arg(0);
-    psswd = server.arg(1);
+    if ((server.argName(0) == "SSID" && server.argName(1) == "PSSWD") ||
+        (server.argName(0) == "ssid" && server.argName(1) == "psswd")) {
 
-    //  const char* ssid = "Robolab";
-    //  const char* password = "W3<3R0bots";
+      Serial.println("Am primit doua argumente valide");
+      Serial.println("SSID: " + server.arg(0));
+      Serial.println("PSSWD: " + server.arg(1));
+      ssid_name = server.arg(0);
+      psswd = server.arg(1);
 
-    //  Convert String to char*
-    int psswd_len = psswd.length() + 1;
-    int ssid_len = ssid_name.length() + 1;
+      //  const char* ssid = "Robolab";
+      //  const char* password = "W3<3R0bots";
 
-    char psswd_array[psswd_len];
-    char ssid_array[ssid_len];
+      //  Convert String to char*
+      int psswd_len = psswd.length() + 1;
+      int ssid_len = ssid_name.length() + 1;
 
-    ssid_name.toCharArray(ssid_array, ssid_len);
-    psswd.toCharArray(psswd_array, psswd_len);
+      char psswd_array[psswd_len];
+      char ssid_array[ssid_len];
 
-    //  WiFi.begin(ssid, password);
-    WiFi.begin(ssid_array, psswd_array);
+      ssid_name.toCharArray(ssid_array, ssid_len);
+      psswd.toCharArray(psswd_array, psswd_len);
 
-    int ok = 0;
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-      ok++;
-      Serial.print(".");
-      if (ok == 15) {
-        server.send(469, "text/plain", "Conection to Wi-Fi failed");
-        Serial.println("Conection to Wi-Fi failed");
-        return;
+      //  WiFi.begin(ssid, password);
+      WiFi.begin(ssid_array, psswd_array);
+
+      int ok = 0;
+      while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        ok++;
+        Serial.print(".");
+        if (ok == 20) {
+          //          server.sendHeader("Access-Control-Allow-Origin", "*");
+          server.send(298, "text/plain", "Conection to Wi-Fi failed");
+          Serial.println("Conection to Wi-Fi failed");
+          return;
+        }
       }
+
+      Serial.println("");
+      Serial.println("WiFi connected");
+      Serial.println("IP address: ");
+      Serial.println(WiFi.localIP());
+
+      //      server.sendHeader("Access-Control-Allow-Origin", "*");
+      server.sendHeader("Status", "200");
+      server.send(200, "text/plain", "Conected");
+      //      mqtt_setup();
+      connected = 1;
+      //    server.close();
     }
+    else {
+      Serial.println("Wrong arguments names");
+      server.sendHeader("Status", "200");
+      server.send(299, "text/plain", "Wrong arguments names");
+    }
+  }
 
-    Serial.println("");
-    Serial.println("WiFi connected");
-    delay(2000);
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-
-    server.send(200, "text/plain", "Conected");
-    connected = 1;
-    mqtt_setup();
-    //    server.close();
+  else {
+    //    server.sendHeader("Access-Control-Allow-Origin", "*");
+    Serial.println("Wrong number of arguments :(");
+    server.sendHeader("Status", "200");
+    server.send(299, "text/plain", "Wrong number of arguments :(");
   }
 }
 
@@ -222,6 +245,7 @@ void loop(void) {
   }
 
   else {
+    mqtt_setup();
 
     //    citim senzorii
     if (! bme.performReading()) {
@@ -284,10 +308,10 @@ void loop(void) {
     //    client.loop();
     Serial.println("-------------");
     //    trimite la 5 minute
-    delay(300000);
+    //    delay(300000);
 
     //    trimite la 10 s
-    //    delay(10000);
+    delay(10000);
   }
 }
 

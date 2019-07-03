@@ -13,8 +13,8 @@
 #include <ArduinoJson.h>
 #include <ATT_IOT.h>
 
-#define DEVICE_ID "FHrh5Lh4e0cK5revM4rTlnPF"
-#define DEVICE_TOKEN "maker:4TRWWKxBNGOlW1VeVnkp8bRpBEvu9r7Njz4BInI"
+#define DEVICE_ID "wc2ZCnXfSB7zAuv7uaJVN14V"
+#define DEVICE_TOKEN "maker:4Krzy0w46ZKyy05zGzwweepJ2c0XsF25Toub2jRF"
 
 // Define http and mqtt endpoints
 #define HTTP_URL "api.allthingstalk.io"  // API endpoint
@@ -35,7 +35,7 @@ MAX44009 light;
 // I2C sensors
 Adafruit_BME680 bme;
 
-float temperature, pressure, humidity, voc, lux;
+float temperature, pressure, humidity, voc, lux, altitude;
 
 // timer variable
 unsigned long elapsed_msec;
@@ -121,52 +121,52 @@ void setup()
     Serial.println("Could not find a valid MAX44009 sensor, check wiring!");
   }
 
-  //  if (!BME680init())
-  //  {
-  //    Serial.println("Could not find a valid BME680 sensor, check wiring!");
-  //    ESP.deepSleep(10000000, WAKE_RF_DEFAULT); // go to sleep for 10s to force a reset
-  //  }
+  if (!BME680init())
+  {
+    Serial.println("Could not find a valid BME680 sensor, check wiring!");
+    ESP.deepSleep(10000000, WAKE_RF_DEFAULT); // go to sleep for 10s to force a reset
+  }
 
   while (!device.subscribe(pubSub)) // Subscribe to mqtt
     Serial.println("retrying");
 
-  //  //  citire date de la bme
-  //  if (!bme.performReading())
-  //  {
-  //    Serial.println("[BME680] Failed to perform reading :(");
-  //    return;
-  //  }
-  //  if (!bme.performReading())
-  //  {
-  //    Serial.println("[BME680] Failed to perform reading :(");
-  //    return;
-  //  }
+  //  citire date de la bme
+  if (!bme.performReading())
+  {
+    Serial.println("[BME680] Failed to perform reading :(");
+    return;
+  }
+  if (!bme.performReading())
+  {
+    Serial.println("[BME680] Failed to perform reading :(");
+    return;
+  }
 
-  //  temperature = bme.temperature;
-  //  pressure = bme.pressure / 100.0;
-  //  humidity = bme.humidity;
-  //  voc = bme.gas_resistance / 1000.0;
-  //  lux = light.get_lux();
+  temperature = bme.temperature;
+  pressure = bme.pressure / 100.0;
+  humidity = bme.humidity;
+  voc = bme.gas_resistance / 1000.0;
+  lux = light.get_lux();
 
-  //  Serial.print("Temperature ...... ");
-  //  Serial.print(temperature);
-  //  Serial.println(" °C");
-  //
-  //  Serial.print("Pressure ......... ");
-  //  Serial.print(pressure);
-  //  Serial.println(" hPa");
-  //
-  //  Serial.print("Humidity ......... ");
-  //  Serial.print(humidity);
-  //  Serial.println(" %");
-  //
-  //  Serial.print("Gas .............. ");
-  //  Serial.print(voc);
-  //  Serial.println(" KOhms");
-  //
-  //  Serial.print("Light ............ ");
-  //  Serial.print(lux);
-  //  Serial.println(" lux");
+  Serial.print("Temperature ...... ");
+  Serial.print(temperature);
+  Serial.println(" °C");
+
+  Serial.print("Pressure ......... ");
+  Serial.print(pressure);
+  Serial.println(" hPa");
+
+  Serial.print("Humidity ......... ");
+  Serial.print(humidity);
+  Serial.println(" %");
+
+  Serial.print("Gas .............. ");
+  Serial.print(voc);
+  Serial.println(" KOhms");
+
+  Serial.print("Light ............ ");
+  Serial.print(lux);
+  Serial.println(" lux");
 
   Serial.print("Esp ip adresss: ");
   Serial.println(WiFi.localIP());
@@ -180,61 +180,68 @@ void setup()
 void loop()
 {
 
-  //  //  citire date de la bme
-  //  if (!bme.performReading())
-  //  {
-  //    Serial.println("Failed to perform reading :(");
-  //    return;
-  //  }
-  //  if (!bme.performReading())
-  //  {
-  //    Serial.println("Failed to perform reading :(");
-  //    return;
-  //  }
-  //
-  //  temperature = bme.temperature;
-  //  pressure = bme.pressure / 100.0;
-  //  humidity = bme.humidity;
-  //  voc = bme.gas_resistance / 1000.0;
+  //  citire date de la bme
+  if (!bme.performReading())
+  {
+    Serial.println("Failed to perform reading :(");
+    return;
+  }
+  if (!bme.performReading())
+  {
+    Serial.println("Failed to perform reading :(");
+    return;
+  }
+
+  temperature = bme.temperature;
+  pressure = bme.pressure / 100.0;
+  humidity = bme.humidity;
+  voc = bme.gas_resistance / 1000.0;
   lux = light.get_lux();
-  //
-  //  Serial.print("Temperature ...... ");
-  //  Serial.print(temperature);
-  //  Serial.println(" °C");
-  //
-  //  Serial.print("Pressure ......... ");
-  //  Serial.print(pressure);
-  //  Serial.println(" hPa");
-  //
-  //  Serial.print("Humidity ......... ");
-  //  Serial.print(humidity);
-  //  Serial.println(" %");
-  //
-  //  Serial.print("Gas .............. ");
-  //  Serial.print(voc);
-  //  Serial.println(" KOhms");
+  altitude = bme.readAltitude(SEALEVELPRESSURE_HPA);
+
+  Serial.print("Temperature ...... ");
+  Serial.print(temperature);
+  Serial.println(" °C");
+
+  Serial.print("Pressure ......... ");
+  Serial.print(pressure);
+  Serial.println(" hPa");
+
+  Serial.print("Humidity ......... ");
+  Serial.print(humidity);
+  Serial.println(" %");
+
+  Serial.print("Gas .............. ");
+  Serial.print(voc);
+  Serial.println(" KOhms");
 
   Serial.print("Light ............ ");
   Serial.print(lux);
   Serial.println(" lux");
 
+  Serial.print("Approx. Altitude .. ");
+  Serial.print(altitude);
+  Serial.println(" m");
+
   // trimitem datele catre server
   payload.reset();
-  payload.map(1); //send a total of 5 values for the declared assets
-  //  payload.addNumber(temperature, "temperature");
-  //  payload.addNumber(pressure, "pressure");
-  //  payload.addNumber(humidity, "humidity");
-  //  payload.addNumber(voc, "voc");
+  payload.map(6); //send a total of 5 values for the declared assets
+  payload.addNumber(temperature, "temperature");
+  payload.addNumber(pressure, "pressure");
+  payload.addNumber(humidity, "humidity");
+  payload.addNumber(voc, "voc");
   payload.addNumber(lux, "light");
+  payload.addNumber(lux, "altitude");
   payload.send();
 
+
+  //low power
   //every 15 min
   //  delay(900000);
 
-  Serial.println("TEst");
+  Serial.println("Sleep 10 seconds");
   delay(10000);
 
   //sleep for 10 seconds
   //  ESP.deepSleep(10000000, WAKE_RF_DEFAULT);
-
 }
